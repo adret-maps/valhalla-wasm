@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><title>valhalla-wasm spike</title>
+<pre id="log"></pre>
+<script type="module">
+import { tilePaths } from "/spike/tiles.mjs";
+const log = (s) => (document.getElementById("log").textContent += s + "\n");
+const cases = await (await fetch("/spike/cases.json")).json();
+// ?main runs the engine on the page thread, where CPU throttling applies.
+const main = new URLSearchParams(location.search).has("main");
+let ask;
+if (main) {
+  const { handle } = await import("/spike/core.mjs");
+  ask = (msg) => new Promise((r) => handle(msg, r));
+} else {
+  const w = new Worker("/spike/worker.mjs", { type: "module" });
+  ask = (msg) => new Promise((r) => { w.onmessage = (e) => r(e.data); w.postMessage(msg); });
+}
+const ready = await ask({ type: "init" });
+log(`init ${ready.ms.toFixed(0)} ms ${ready.err || ""}`);
+const results = [];
+for (const c of cases.filter((c) => c.costing !== "auto")) {
+  const request = JSON.stringify({ locations: c.locations.map(([lat, lon]) => ({ lat, lon })), costing: c.costing, directions_type: "none" });
+  const r = await ask({ type: "route", request, tiles: tilePaths(c.locations) });
+  const server = await (await fetch("/server/route", { method: "POST", body: request })).json();
+  const wt = JSON.parse(r.out).trip, st = server.trip;
+  const same = !!wt && !!st && wt.legs.map((l) => l.shape).join() === st.legs.map((l) => l.shape).join();
+  results.push({ name: c.name, same, tiles: tilePaths(c.locations).length, MB: +(r.bytes / 2 ** 20).toFixed(1),
+    fetchMs: Math.round(r.fetchMs), reinitMs: Math.round(r.reinitMs), routeMs: Math.round(r.routeMs), warmMs: Math.round(r.warmMs), heapMB: Math.round(r.heapMB),
+    err: wt ? undefined : r.out.slice(0, 200) });
+  log(JSON.stringify(results.at(-1)));
+}
+window.__done = { init: ready.ms, results };
+</script>

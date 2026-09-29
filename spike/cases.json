@@ -1,0 +1,10 @@
+[
+ {"name": "Aosta to Pila (hike)", "costing": "pedestrian", "locations": [[45.7372,7.3206],[45.7640,7.3890]]},
+ {"name": "Becca di Nona (hike)", "costing": "pedestrian", "locations": [[45.7215,7.3413],[45.6904,7.3522]]},
+ {"name": "Cogne to Rifugio Vittorio Sella (hike)", "costing": "pedestrian", "locations": [[45.6085,7.3556],[45.5693,7.2960]]},
+ {"name": "Courmayeur to Rifugio Bonatti (hike)", "costing": "pedestrian", "locations": [[45.7969,6.9688],[45.8412,7.0357]]},
+ {"name": "Three stops, Aosta area (hike)", "costing": "pedestrian", "locations": [[45.7555,7.3205],[45.7700,7.3395],[45.7640,7.3890]]},
+ {"name": "Breuil-Cervinia to Plan Maison (hike)", "costing": "pedestrian", "locations": [[45.9337,7.6310],[45.9467,7.6484]]},
+ {"name": "Aosta to Courmayeur (bike)", "costing": "bicycle", "locations": [[45.7372,7.3206],[45.7969,6.9688]]},
+ {"name": "Aosta to Torino (car)", "costing": "auto", "locations": [[45.7372,7.3206],[45.0703,7.6869]]}
+]

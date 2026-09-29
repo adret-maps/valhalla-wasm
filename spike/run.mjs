@@ -1,0 +1,13 @@
+import { chromium } from "/home/mathi/projects/hiking-trail-platform/node_modules/playwright/index.mjs";
+const rate = Number(process.argv[2] ?? 1);
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const cdp = await page.context().newCDPSession(page);
+await cdp.send("Emulation.setCPUThrottlingRate", { rate });
+page.on("pageerror", (e) => console.log("pageerror", e.message));
+await page.goto(`http://localhost:8765/${process.argv[3] ?? ""}`);
+await page.waitForFunction(() => window.__done, null, { timeout: 300000 });
+const d = await page.evaluate(() => window.__done);
+console.log(`CPU x${rate}: init ${d.init.toFixed(0)} ms`);
+console.table(d.results.map(({ err, ...x }) => (err ? { ...x, err: err.slice(0, 60) } : x)));
+await browser.close();
