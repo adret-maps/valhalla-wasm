@@ -105,7 +105,7 @@ pass its URL: `loadValhalla({ tiles, wasmUrl })`. The file is exported as
 - `tilesInBounds(bounds, levels = [0, 1, 2])`: every tile over a bounding
   box, as `{ level, id, path }`.
 - `MemoryTileSource`: a `Map` of tiles with `set`, `setTile(level, id, bytes)`,
-  `has`, `delete`, `size`, `bytes`.
+  `has`, `delete`, `clear`, `keys`, `size`, `bytes`.
 
 Level 0 holds highways in 4° tiles, level 1 arterial roads in 1° tiles,
 level 2 local roads, tracks and paths in 0.25° tiles. A route needs the

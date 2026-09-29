@@ -47,6 +47,16 @@ export class MemoryTileSource implements TileSource {
     return this.#tiles.delete(path);
   }
 
+  /** Drop every tile. */
+  clear(): void {
+    this.#tiles.clear();
+  }
+
+  /** The paths of the tiles held. */
+  keys(): IterableIterator<string> {
+    return this.#tiles.keys();
+  }
+
   /** Number of tiles held. */
   get size(): number {
     return this.#tiles.size;
