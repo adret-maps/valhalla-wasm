@@ -10,12 +10,14 @@
 #include <emscripten/bind.h>
 
 #include <boost/property_tree/ptree.hpp>
+#include <cstring>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 
 #include "baldr/graphreader.h"
+#include "baldr/graphtileheader.h"
 #include "baldr/rapidjson_utils.h"
 #include "baldr/tilegetter.h"
 #include "exceptions.h"
@@ -43,6 +45,11 @@ namespace {
 
 using valhalla::baldr::tile_getter_t;
 
+// Tiles of different graph builds must not meet in one search: edge ids
+// change between builds, so a route across them would be wrong, not failed.
+// The first tile read fixes the build; a tile of another build fails the
+// request with 446 (Valhalla's "tile set has changed"). Build id 0 marks
+// tiles from before build ids existed, which are not checked.
 class js_tile_getter_t : public tile_getter_t {
 public:
   explicit js_tile_getter_t(bool gzipped) : gzipped_(gzipped) {
@@ -59,6 +66,18 @@ public:
     }
     response.bytes_.resize(static_cast<size_t>(size));
     js_tile_copy(response.bytes_.data());
+    if (!gzipped_ && response.bytes_.size() >= sizeof(valhalla::baldr::GraphTileHeader)) {
+      valhalla::baldr::GraphTileHeader header;
+      std::memcpy(&header, response.bytes_.data(), sizeof(header));
+      const uint16_t build = header.build_id();
+      if (build != 0) {
+        if (build_id_ == 0) {
+          build_id_ = build;
+        } else if (build != build_id_) {
+          throw valhalla::valhalla_exception_t(446);
+        }
+      }
+    }
     response.status_ = status_code_t::SUCCESS;
     response.http_code_ = 200;
     return response;
@@ -74,6 +93,7 @@ public:
 
 private:
   bool gzipped_;
+  uint16_t build_id_ = 0;
 };
 
 boost::property_tree::ptree config;

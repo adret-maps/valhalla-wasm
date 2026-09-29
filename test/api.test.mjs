@@ -83,3 +83,36 @@ test("config overrides are merged into the defaults", { skip: !hasData }, async 
     (e) => e instanceof ValhallaError && e.code === 154,
   );
 });
+
+// Where the tileset build id sits: the one 8-byte header word whose top 16
+// bits are the same, and not zero, in every tile of the set.
+function buildIdOffset(buffers) {
+  for (let off = 0; off + 8 <= 272; off += 8) {
+    const tops = buffers.map((b) => Buffer.from(b).readBigUInt64LE(off) >> 48n);
+    if (tops[0] !== 0n && tops.every((t) => t === tops[0])) {
+      const lows = new Set(buffers.map((b) => Buffer.from(b).readBigUInt64LE(off) & 0xffffffffffffn));
+      if (lows.size === buffers.length) return off;
+    }
+  }
+  return -1;
+}
+
+test("tiles of two graph builds are refused together (446)", { skip: !hasData }, async () => {
+  const files = walk(TILES).filter((f) => f.endsWith(".gph") && !relative(TILES, f).startsWith("3/"));
+  const bytes = new Map(files.map((f) => [relative(TILES, f), new Uint8Array(readFileSync(f))]));
+  const off = buildIdOffset([...bytes.values()]);
+  assert.ok(off > 0, "build id not found in the headers");
+  // Another build: the level-2 tiles keep theirs, level 0 and 1 get a new one.
+  for (const [path, b] of bytes) {
+    if (path.startsWith("2/")) continue;
+    const copy = Buffer.from(b);
+    const word = copy.readBigUInt64LE(off);
+    copy.writeBigUInt64LE((word & 0xffffffffffffn) | (((word >> 48n) ^ 0x5an) << 48n), off);
+    bytes.set(path, new Uint8Array(copy));
+  }
+  const v = await loadValhalla({ tiles: { get: (p) => bytes.get(p) } });
+  assert.throws(
+    () => v.route({ locations: [{ lat: 42.5078, lon: 1.5211 }, { lat: 42.5436, lon: 1.5731 }], costing: "auto" }),
+    (e) => e instanceof ValhallaError && e.code === 446,
+  );
+});

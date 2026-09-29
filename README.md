@@ -118,7 +118,11 @@ decoded (up to `mjolnir.max_cache_size`). A tile the source did not have is
 not asked for again: after adding tiles, call `reset()`.
 
 Tiles must come from the Valhalla version this package builds (3.9.0); the
-graph format can change between versions.
+graph format can change between versions. They must also come from one
+graph build: edge ids change between builds, so a search across tiles of
+two builds would give a wrong route. The first tile the engine reads (after
+`loadValhalla` or `reset()`) fixes the build, and a tile of another build
+fails the request with error 446. Replace all of an area's tiles together.
 
 ## How it works
 
