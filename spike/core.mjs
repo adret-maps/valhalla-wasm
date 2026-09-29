@@ -1,28 +1,23 @@
-import createValhalla from "/dist/valhalla.mjs";
+import { loadValhalla, MemoryTileSource } from "/lib/index.js";
 
-let m;
-let config;
-const have = new Set();
+let v;
+const tiles = new MemoryTileSource();
+const missing = new Set();
 
 async function load(path) {
-  if (have.has(path)) return 0;
+  if (tiles.has(path) || missing.has(path)) return 0;
   const res = await fetch(`/tiles/${path}`);
-  if (!res.ok) { have.add(path); return 0; }
+  if (!res.ok) { missing.add(path); return 0; }
   const buf = new Uint8Array(await res.arrayBuffer());
-  const dir = `/tiles/${path.split("/").slice(0, -1).join("/")}`;
-  m.FS.mkdirTree(dir);
-  m.FS.writeFile(`/tiles/${path}`, buf);
-  have.add(path);
+  tiles.set(path, buf);
   return buf.length;
 }
 
 export async function handle(data, post) {
   if (data.type === "init") {
     const t = performance.now();
-    m = await createValhalla();
-    config = await (await fetch("/spike/config.json")).text();
-    const err = m.init(config);
-    post({ type: "ready", ms: performance.now() - t, err });
+    v = await loadValhalla({ tiles, config: { mjolnir: { max_cache_size: 67108864 } } });
+    post({ type: "ready", ms: performance.now() - t, err: "" });
     return;
   }
   const t0 = performance.now();
@@ -31,16 +26,15 @@ export async function handle(data, post) {
     const sizes = await Promise.all(data.tiles.slice(i, i + 6).map(load));
     bytes += sizes.reduce((a, b) => a + b, 0);
   }
-  // Valhalla lists the tiles of tile_dir when the actor is made (tile set,
-  // connectivity map): after adding tiles, make it again.
   const tr = performance.now();
-  if (bytes > 0) m.init(config);
+  if (bytes > 0) v.reset();
   const reinitMs = performance.now() - tr;
   const t1 = performance.now();
-  const out = m.route(data.request);
+  let out;
+  try { out = JSON.stringify(v.route(data.request)); } catch (e) { out = JSON.stringify({ error: e.message }); }
   const t2 = performance.now();
-  const again = m.route(data.request);
+  try { v.route(data.request); } catch {}
   const t3 = performance.now();
-  post({ type: "routed", out, again: again === out, fetchMs: tr - t0, reinitMs, bytes,
-    routeMs: t2 - t1, warmMs: t3 - t2, heapMB: m.HEAP8.length / 2 ** 20 });
+  post({ type: "routed", out, fetchMs: tr - t0, reinitMs, bytes, routeMs: t2 - t1, warmMs: t3 - t2,
+    heapMB: v.memoryBytes / 2 ** 20 });
 }

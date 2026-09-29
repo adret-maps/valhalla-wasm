@@ -6,7 +6,7 @@ import { join } from "node:path";
 const ROOT = new URL("..", import.meta.url).pathname;
 const TILES = process.argv[2];
 const SERVER = process.env.VALHALLA ?? "http://localhost:8003";
-const TYPES = { ".mjs": "text/javascript", ".js": "text/javascript", ".wasm": "application/wasm", ".html": "text/html", ".json": "application/json" };
+const TYPES = { ".d.ts": "text/plain", ".mjs": "text/javascript", ".js": "text/javascript", ".wasm": "application/wasm", ".html": "text/html", ".json": "application/json" };
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   try {

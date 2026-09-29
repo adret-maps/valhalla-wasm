@@ -1,0 +1,27 @@
+{
+  "name": "@adret-maps/valhalla-wasm",
+  "version": "3.9.0-alpha.1",
+  "description": "Valhalla's routing engine (route, trace_route, locate) compiled to WebAssembly, for browsers, Web Workers and Node.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./valhalla.wasm": "./dist/valhalla.wasm",
+    "./default-config.json": "./lib/default-config.json"
+  },
+  "files": ["lib", "dist/valhalla.mjs", "dist/valhalla.d.mts", "dist/valhalla.wasm", "LICENSE", "README.md"],
+  "sideEffects": false,
+  "keywords": ["valhalla", "routing", "webassembly", "wasm", "openstreetmap", "offline"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build:engine": "sh scripts/build.sh",
+    "build": "tsc -p tsconfig.json && cp js/default-config.json lib/",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

@@ -48,3 +48,7 @@ RUN B=$(echo ${BOOST_VERSION} | tr . _) \
  && curl -fsSL https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${B}.tar.gz | tar xz \
  && mkdir -p ${PREFIX}/include && mv boost_${B}/boost ${PREFIX}/include/ \
  && rm -rf boost_${B}
+
+# Builds run as the calling user (so build/ and dist/ stay theirs): let any
+# user use and extend Emscripten's cache, filled above.
+RUN chmod -R a+rwX /emsdk/upstream/emscripten/cache

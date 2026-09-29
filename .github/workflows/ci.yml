@@ -1,0 +1,74 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - uses: docker/setup-buildx-action@v3
+      # The toolchain image (Emscripten, protobuf, zlib, Boost) changes only
+      # with docker/Dockerfile: cached across runs.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: deps
+          tags: valhalla-wasm-deps
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build the engine
+        run: sh scripts/build.sh
+      - run: npm ci
+      - run: npm run build
+      - name: Conformance data (native Valhalla on Andorra)
+        run: sh scripts/test-data.sh
+      - run: npm test
+      - name: Sizes
+        run: |
+          ls -l dist
+          echo "gzip: $(gzip -9c dist/valhalla.wasm | wc -c) bytes"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: |
+            lib
+            dist/valhalla.mjs
+            dist/valhalla.d.mts
+            dist/valhalla.wasm
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v5
+        with:
+          name: package
+      - name: Tag matches package version
+        run: test "v$(node -p 'require("./package.json").version')" = "${GITHUB_REF_NAME}"
+      - run: npm publish --provenance --access public
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/valhalla.wasm dist/valhalla.mjs --generate-notes

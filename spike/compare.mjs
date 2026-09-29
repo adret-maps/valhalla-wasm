@@ -1,6 +1,6 @@
 // Route the same legs in the WASM build (tiles mounted from disk) and on the
 // running Valhalla server, and compare. Usage: node compare.mjs <tiles dir>
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import createValhalla from "../dist/valhalla.mjs";
 
@@ -11,8 +11,14 @@ const cases = JSON.parse(readFileSync(new URL("./cases.json", import.meta.url), 
 
 const t0 = performance.now();
 const m = await createValhalla();
-m.FS.mkdir("/tiles");
-m.FS.mount(m.NODEFS, { root: TILES }, "/tiles");
+let asked = 0;
+m.tileSource = {
+  get(path) {
+    asked++;
+    const file = `${TILES}/${path}`;
+    return existsSync(file) ? readFileSync(file) : undefined;
+  },
+};
 const err = m.init(config);
 if (err) throw new Error(err);
 console.log(`load + init ${(performance.now() - t0).toFixed(0)} ms`);
@@ -47,5 +53,5 @@ for (const c of cases) {
       ` | ${ms.toFixed(0)} ms cold, ${warm.toFixed(0)} ms warm`,
   );
 }
-console.log(`${ok}/${cases.length} identical`);
+console.log(`${ok}/${cases.length} identical, ${asked} tile requests`);
 console.log(`heap ${(m.HEAP8.length / 2 ** 20).toFixed(0)} MB`);

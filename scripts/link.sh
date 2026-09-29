@@ -17,7 +17,7 @@ em++ -O3 -std=c++20 -fwasm-exceptions \
   -lembind \
   -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createValhalla \
   -sENVIRONMENT=web,worker,node \
-  -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=64MB -sMAXIMUM_MEMORY=2GB \
-  -sEXPORTED_RUNTIME_METHODS=FS,NODEFS,HEAP8 -lnodefs.js \
+  -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=32MB -sMAXIMUM_MEMORY=2GB \
+  -sEXPORTED_RUNTIME_METHODS=HEAP8 -sFILESYSTEM=0 \
   -o /work/dist/valhalla.mjs
 ls -la /work/dist

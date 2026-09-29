@@ -2,3 +2,7 @@ upstream/
 build/
 dist/
 *.log
+lib/
+node_modules/
+test/fixtures/data/
+.emcache/
