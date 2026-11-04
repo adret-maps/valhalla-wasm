@@ -183,7 +183,8 @@ scripts.
 
 ## Licence
 
-MIT. Valhalla is MIT-licensed; see its
-[licence](https://github.com/valhalla/valhalla/blob/master/COPYING) for the
-libraries it bundles. OpenStreetMap data in the test fixtures is
-© OpenStreetMap contributors, ODbL.
+MIT. The compiled engine statically links Valhalla (MIT) and the libraries
+listed, with their licence texts, in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), which ships in the
+package. OpenStreetMap data in the test fixtures is © OpenStreetMap
+contributors, ODbL.

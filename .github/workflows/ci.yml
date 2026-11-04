@@ -67,8 +67,17 @@ jobs:
           name: package
       - name: Tag matches package version
         run: test "v$(node -p 'require("./package.json").version')" = "${GITHUB_REF_NAME}"
-      - run: npm publish --provenance --access public
+      # npm refuses a prerelease version without an explicit dist-tag, and
+      # "latest" must never point at one.
+      - name: Publish
+        run: |
+          v=$(node -p 'require("./package.json").version')
+          case "$v" in
+            *-*) tag=$(echo "${v#*-}" | cut -d. -f1) ;;
+            *)   tag=latest ;;
+          esac
+          npm publish --provenance --access public --tag "$tag"
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/valhalla.wasm dist/valhalla.mjs --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/valhalla.wasm dist/valhalla.mjs THIRD_PARTY_NOTICES.md --generate-notes $(case "$GITHUB_REF_NAME" in *-*) echo --prerelease;; esac)
