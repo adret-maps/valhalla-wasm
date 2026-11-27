@@ -1,8 +1,9 @@
 # valhalla-wasm
 
 [Valhalla](https://github.com/valhalla/valhalla)'s routing engine compiled to
-WebAssembly. `route`, `trace_route` and `locate` run in the browser, in a Web
-Worker or in Node, on Valhalla graph tiles you provide, with the same JSON
+WebAssembly. `route`, `trace_route`, `locate`, `isochrone` and `expansion`
+run in the browser, in a Web Worker or in Node, on Valhalla graph tiles you
+provide, with the same JSON
 requests and responses as Valhalla's HTTP service. Built for offline routing
 in mobile web apps.
 
@@ -88,12 +89,17 @@ pass its URL: `loadValhalla({ tiles, wasmUrl })`. The file is exported as
 
 ### `Valhalla`
 
-- `route(request)`, `traceRoute(request)`, `locate(request)`: the request as
+- `route(request)`, `traceRoute(request)`, `locate(request)`,
+  `isochrone(request)`, `expansion(request)`: the request as
   an object or a JSON string; the response parsed, exactly as the HTTP API
   returns it. On an error Valhalla answers with (no path, no road near a
   stop, a limit exceeded) they throw a `ValhallaError` with Valhalla's
   `code`, the HTTP `status` and `statusText` the service would send, and
-  its message.
+  its message. With no graph tiles near the location, `isochrone` answers
+  a tiny polygon around it rather than an error: check that the tiles are
+  there before you ask. Its limits (`service_limits.isochrone`:
+  `max_contours` 4 and `max_time_contour` 120 by default) are set through
+  `config`.
 - `reset()`: forget the engine's cached tiles and the tiles the source did
   not have.
 - `memoryBytes`: WebAssembly memory reserved by the engine.

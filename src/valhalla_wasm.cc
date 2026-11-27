@@ -213,10 +213,20 @@ std::string locate(const std::string& request) {
   return guarded([&] { return actor->locate(request); });
 }
 
+std::string isochrone(const std::string& request) {
+  return guarded([&] { return actor->isochrone(request); });
+}
+
+std::string expansion(const std::string& request) {
+  return guarded([&] { return actor->expansion(request); });
+}
+
 EMSCRIPTEN_BINDINGS(valhalla) {
   emscripten::function("init", &init);
   emscripten::function("reset", &reset);
   emscripten::function("route", &route);
   emscripten::function("traceRoute", &trace_route);
   emscripten::function("locate", &locate);
+  emscripten::function("isochrone", &isochrone);
+  emscripten::function("expansion", &expansion);
 }
