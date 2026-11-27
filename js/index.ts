@@ -100,6 +100,10 @@ export interface Valhalla {
   traceRoute(request: Request): Response;
   /** The /locate action. */
   locate(request: Request): Response;
+  /** The /isochrone action: contour polygons or lines around a location. */
+  isochrone(request: Request): Response;
+  /** The /expansion action: the edges a search settled, as GeoJSON. */
+  expansion(request: Request): Response;
   /**
    * Forget cached tiles and the tiles the source did not have. Call after
    * the source gained or changed tiles: a tile found missing is not asked
@@ -133,6 +137,8 @@ interface EngineModule {
   route(request: string): string;
   traceRoute(request: string): string;
   locate(request: string): string;
+  isochrone(request: string): string;
+  expansion(request: string): string;
 }
 
 function merge(base: unknown, over: unknown): unknown {
@@ -177,6 +183,8 @@ export async function loadValhalla(options: LoadOptions): Promise<Valhalla> {
     route: (r) => parse(m.route(text(r))),
     traceRoute: (r) => parse(m.traceRoute(text(r))),
     locate: (r) => parse(m.locate(text(r))),
+    isochrone: (r) => parse(m.isochrone(text(r))),
+    expansion: (r) => parse(m.expansion(text(r))),
     reset() {
       const e = m.reset();
       if (e) throw new Error(`valhalla-wasm: ${e}`);

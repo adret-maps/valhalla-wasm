@@ -9,5 +9,7 @@ declare const createModule: (options?: {
   route(request: string): string;
   traceRoute(request: string): string;
   locate(request: string): string;
+  isochrone(request: string): string;
+  expansion(request: string): string;
 }>;
 export default createModule;
